@@ -1,0 +1,27 @@
+/* Định dạng cho thanh điều hướng */
+.navigation-bar {
+  background-color: #333; /* Màu nền thanh điều hướng */
+  padding: 10px 20px;
+}
+
+.navigation-bar ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+.navigation-bar li {
+  margin-right: 20px;
+}
+
+.navigation-bar a {
+  color: #fff; /* Màu font chữ của các liên kết */
+  text-decoration: none;
+  font-size: 18px;
+}
+
+/* Khi di chuột vào các liên kết */
+.navigation-bar a:hover {
+  color: #ff7e5f; /* Màu font khi hover */
+}

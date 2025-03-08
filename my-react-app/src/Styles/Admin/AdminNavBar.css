@@ -1,0 +1,31 @@
+.sidebar {
+  width: 250px;
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  height: 100vh;
+  padding: 20px;
+  position: fixed;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  font-size: 16px;
+  cursor: pointer;
+  color: white;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
