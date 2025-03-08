@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  Navbar as BootstrapNavbar,
-  Nav,
-  Container,
-  Form,
-  Button,
-} from "react-bootstrap";
+import { Navbar as BootstrapNavbar, Nav, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Navbar.css";
@@ -28,28 +22,32 @@ function Navbar() {
       className="navbar-custom navbar-fixed shadow-lg"
     >
       <Container>
-        <BootstrapNavbar.Brand
-          onClick={() => navigate("/")}
-          className="d-flex align-items-center cursor-pointer"
-        >
-          <i className="bi bi-exclude me-2" />
-          <span className="fw-bold">Our Store</span>
+        <BootstrapNavbar.Brand className="d-flex align-items-center">
+          <span
+            onClick={() => navigate("/")}
+            className="d-flex align-items-center cursor-pointer"
+          >
+            <i className="bi bi-exclude me-2" />
+            <span className="fw-bold">Our Store</span>
+          </span>
         </BootstrapNavbar.Brand>
         <BootstrapNavbar.Toggle aria-controls="navbar-nav" />
         <BootstrapNavbar.Collapse id="navbar-nav">
           {/* Search Form */}
-          <Form className="d-flex ms-3 search-form" onSubmit={handleSearch}>
-            <Form.Control
+          <form className="group ms-3" onSubmit={handleSearch}>
+            <svg className="icon" aria-hidden="true" viewBox="0 0 24 24">
+              <g>
+                <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path>
+              </g>
+            </svg>
+            <input
               type="search"
               placeholder="Search products..."
-              className="search-input"
+              className="input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Button variant="light" type="submit" className="search-button">
-              <i className="bi bi-search" />
-            </Button>
-          </Form>
+          </form>
 
           {/* Navigation Links */}
           <Nav className="ms-auto d-flex align-items-center">

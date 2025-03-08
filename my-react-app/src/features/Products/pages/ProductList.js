@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Alert } from "react-bootstrap";
+import { Container, Alert } from "react-bootstrap";
 import ProductCard from "../../Products/components/ProductCard";
 import fetchProducts from "../api/productApi";
+import "../styles/ProductList.css";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
@@ -42,13 +43,13 @@ function ProductList() {
 
   return (
     <Container className="mt-4">
-      <Row>
+      <div className="product-container">
         {products.map((product) => (
-          <Col key={product.id} xs={12} sm={6} md={4}>
+          <div key={product.id}>
             <ProductCard product={product} onAddToCart={handleAddToCart} />
-          </Col>
+          </div>
         ))}
-      </Row>
+      </div>
     </Container>
   );
 }
