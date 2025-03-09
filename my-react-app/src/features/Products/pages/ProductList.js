@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Alert } from "react-bootstrap";
 import ProductCard from "../../Products/components/ProductCard";
-import fetchProducts from "../api/productApi";
+import { fetchProducts } from "../api/productApi";
 import "../styles/ProductList.css";
 
 function ProductList() {

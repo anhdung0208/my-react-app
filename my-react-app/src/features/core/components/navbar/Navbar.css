@@ -29,7 +29,7 @@ body {
 
 .nav-link-custom {
   color: #333;
-  font-weight: 500;
+  font-weight: bold !important;
   margin: 0 10px;
   padding: 10px 15px;
   transition: color 0.2s ease;
