@@ -20,10 +20,10 @@ const fetchProducts = async (page, size) => {
   }
 };
 
-const fetchOneProduct = async (id) => {
+const fetchOneProduct = async (productId) => {
   try {
     const response = await fetch(
-      `http://localhost:8080/api/v1/product/get-single-product/${id}`
+      `http://localhost:8080/api/v1/product/get-single-product/${productId}`
     );
     if (!response.ok) {
       throw new Error(

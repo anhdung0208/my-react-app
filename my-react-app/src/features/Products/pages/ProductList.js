@@ -4,7 +4,7 @@ import ProductCard from "../../Products/components/ProductCard";
 import { fetchProducts } from "../api/productApi";
 import "../styles/ProductList.css";
 
-function ProductList() {
+const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +52,6 @@ function ProductList() {
       </div>
     </Container>
   );
-}
+};
 
 export default ProductList;
