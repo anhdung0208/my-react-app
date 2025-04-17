@@ -11,6 +11,7 @@ import AnalyticsPage from "./features/adminManagement/pages/AnalyticsPage";
 import SettingsPage from "./features/adminManagement/pages/SettingsPage";
 import AdminLayout from "./layouts/admin-layout/AdminLayout";
 import LoginPage from "./features/auth/componets/LoginForm";
+import CartPage from "./features/carts/pages/CartPage";
 
 function App() {
   return (
@@ -29,6 +30,16 @@ function App() {
         element={
           <MainLayout>
             <ProductDetail />
+          </MainLayout>
+        }
+      />
+
+
+      <Route
+        path="/cart"
+        element={
+          <MainLayout>
+            <CartPage />
           </MainLayout>
         }
       />

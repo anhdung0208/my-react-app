@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Search, Trash2, Plus } from 'lucide-react';
+import { Search, Trash2, Plus, Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import {
@@ -7,6 +7,7 @@ import {
   deleteProductById,
   addProduct,
   fetchCategoryList,
+  editProduct,
 } from '../../api/productPageApi';
 
 const ProductsTable = () => {
@@ -19,10 +20,11 @@ const ProductsTable = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-
   const pageSize = 10;
 
   const [showModal, setShowModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
   const [formData, setFormData] = useState({
     productName: '',
     currentProductPrice: '',
@@ -60,6 +62,7 @@ const ProductsTable = () => {
           productStatus: product.productStatus || 'Unknown',
           importTime: product.importTime || new Date().toISOString(),
           imageUrl: product.imageUrl || null,
+          quantitySold: product.quantitySold || 0, // Thêm quantitySold
         }));
 
         setProductsList(normalizedProducts);
@@ -129,11 +132,36 @@ const ProductsTable = () => {
       importTime: '',
       categoryId: '',
     });
+    setIsEditMode(false);
+    setEditProductId(null);
     setShowModal(true);
+  };
+
+  const handleEditProduct = (productId) => {
+    const productToEdit = products.find((p) => p.id === productId);
+    if (productToEdit) {
+      setFormData({
+        productName: productToEdit.productName,
+        currentProductPrice: productToEdit.currentProductPrice.toString(),
+        retailPrice: productToEdit.retailPrice.toString(),
+        productDescription: productToEdit.productDescription,
+        stockQuantity: productToEdit.stockQuantity.toString(),
+        manufacturingCountry: productToEdit.manufacturingCountry,
+        percentagePromoteOfCustomer: productToEdit.percentagePromoteOfCustomer.toString(),
+        productStatus: productToEdit.productStatus,
+        importTime: new Date(productToEdit.importTime).toISOString().slice(0, 16),
+        categoryId: productToEdit.categoryId || '',
+      });
+      setIsEditMode(true);
+      setEditProductId(productId);
+      setShowModal(true);
+    }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setIsEditMode(false);
+    setEditProductId(null);
     setFormData({
       productName: '',
       currentProductPrice: '',
@@ -163,31 +191,42 @@ const ProductsTable = () => {
       productName: formData.productName,
       currentProductPrice: parseFloat(formData.currentProductPrice) || 0,
       retailPrice: parseFloat(formData.retailPrice) || 0,
-      quantity: parseInt(formData.stockQuantity) || 0,
       productDescription: formData.productDescription,
       stockQuantity: parseInt(formData.stockQuantity) || 0,
       manufacturingCountry: formData.manufacturingCountry,
-      starRating: 0,
+      percentagePromoteOfCustomer: parseFloat(formData.percentagePromoteOfCustomer) || 0,
       productStatus: formData.productStatus,
       importTime: formData.importTime
         ? new Date(formData.importTime).toISOString()
         : new Date().toISOString(),
-      categoryId: parseInt(formData.categoryId),
+      categoryId: parseInt(formData.categoryId) || null,
     };
 
     try {
-      const response = await addProduct(productData);
-      const newProduct = response.data;
-      setProductsList((prev) => [...prev, newProduct]);
-      setFilteredProducts((prev) => [...prev, newProduct]);
+      if (isEditMode) {
+        await editProduct(editProductId, productData);
+        const updatedProducts = products.map((p) =>
+          p.id === editProductId ? { ...p, ...productData, id: editProductId } : p
+        );
+        setProductsList(updatedProducts);
+        setFilteredProducts(updatedProducts);
+      } else {
+        const response = await addProduct(productData);
+        const newProduct = { ...response.data, id: response.data.id };
+        setProductsList((prev) => [...prev, newProduct]);
+        setFilteredProducts((prev) => [...prev, newProduct]);
+      }
       handleCloseModal();
     } catch (error) {
-      setError(error.message || 'Failed to add product');
+      setError(error.message || `Failed to ${isEditMode ? 'edit' : 'add'} product`);
     }
   };
 
-  // URL dự phòng cho hình ảnh
   const fallbackImage = 'https://placehold.co/40x40?text=Image+Not+Found';
+
+  const topSellingProducts = products
+    .sort((a, b) => b.quantitySold - a.quantitySold)
+    .slice(0, 10);
 
   return (
     <>
@@ -202,10 +241,7 @@ const ProductsTable = () => {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="card-title h4 mb-0 text-white">Product List</h2>
             <div className="d-flex align-items-center">
-              <button
-                className="btn btn-primary me-3"
-                onClick={handleAddProduct}
-              >
+              <button className="btn btn-primary me-3" onClick={handleAddProduct}>
                 <Plus size={18} className="me-1" /> Add Product
               </button>
               <div className="position-relative">
@@ -215,11 +251,7 @@ const ProductsTable = () => {
                   className="form-control ps-5"
                   onChange={handleSearch}
                   value={searchTerm}
-                  style={{
-                    backgroundColor: '#374151',
-                    color: '#FFFFFF',
-                    border: 'none',
-                  }}
+                  style={{ backgroundColor: '#374151', color: '#FFFFFF', border: 'none' }}
                 />
                 <Search
                   className="position-absolute top-50 translate-middle-y ms-2 text-white"
@@ -253,36 +285,16 @@ const ProductsTable = () => {
                 <table className="table table-dark table-hover">
                   <thead>
                     <tr>
-                      <th scope="col" className="text-white">
-                        Product Name
-                      </th>
-                      <th scope="col" className="text-white">
-                        Current Price
-                      </th>
-                      <th scope="col" className="text-white">
-                        Retail Price
-                      </th>
-                      <th scope="col" className="text-white">
-                        Description
-                      </th>
-                      <th scope="col" className="text-white">
-                        Stock Quantity
-                      </th>
-                      <th scope="col" className="text-white">
-                        Manufacturing Country
-                      </th>
-                      <th scope="col" className="text-white">
-                        Promotion (%)
-                      </th>
-                      <th scope="col" className="text-white">
-                        Status
-                      </th>
-                      <th scope="col" className="text-white">
-                        Import Time
-                      </th>
-                      <th scope="col" className="text-white">
-                        Actions
-                      </th>
+                      <th scope="col" className="text-white">Product Name</th>
+                      <th scope="col" className="text-white">Current Price</th>
+                      <th scope="col" className="text-white">Retail Price</th>
+                      <th scope="col" className="text-white">Description</th>
+                      <th scope="col" className="text-white">Stock Quantity</th>
+                      <th scope="col" className="text-white">Manufacturing Country</th>
+                      <th scope="col" className="text-white">Promotion (%)</th>
+                      <th scope="col" className="text-white">Status</th>
+                      <th scope="col" className="text-white">Import Time</th>
+                      <th scope="col" className="text-white">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -301,15 +313,12 @@ const ProductsTable = () => {
                               className="rounded-circle me-2"
                               style={{ width: '40px', height: '40px' }}
                               onError={(e) => {
-                                // Chỉ đặt lại src nếu nó chưa phải là hình ảnh dự phòng
                                 if (e.target.src !== fallbackImage) {
                                   e.target.src = fallbackImage;
                                 }
                               }}
                             />
-                            <span className="text-white">
-                              {product.productName}
-                            </span>
+                            <span className="text-white">{product.productName}</span>
                           </div>
                         </td>
                         <td className="align-middle text-white">
@@ -318,30 +327,28 @@ const ProductsTable = () => {
                         <td className="align-middle text-white">
                           ${product.retailPrice.toFixed(2)}
                         </td>
-                        <td className="align-middle text-white">
-                          {product.productDescription}
-                        </td>
-                        <td className="align-middle text-white">
-                          {product.stockQuantity}
-                        </td>
-                        <td className="align-middle text-white">
-                          {product.manufacturingCountry}
-                        </td>
+                        <td className="align-middle text-white">{product.productDescription}</td>
+                        <td className="align-middle text-white">{product.stockQuantity}</td>
+                        <td className="align-middle text-white">{product.manufacturingCountry}</td>
                         <td className="align-middle text-white">
                           {product.percentagePromoteOfCustomer.toFixed(2)}%
                         </td>
-                        <td className="align-middle text-white">
-                          {product.productStatus}
-                        </td>
+                        <td className="align-middle text-white">{product.productStatus}</td>
                         <td className="align-middle text-white">
                           {new Date(product.importTime).toLocaleDateString()}
                         </td>
                         <td className="align-middle">
                           <button
-                            className="btn btn-link text-danger p-0"
+                            className="btn btn-link text-danger p-0 me-2"
                             onClick={() => handleDelete(product.id)}
                           >
                             <Trash2 size={18} />
+                          </button>
+                          <button
+                            className="btn btn-link text-primary p-0"
+                            onClick={() => handleEditProduct(product.id)}
+                          >
+                            <Pencil size={18} />
                           </button>
                         </td>
                       </motion.tr>
@@ -374,9 +381,101 @@ const ProductsTable = () => {
         </div>
       </motion.div>
 
+      <motion.div
+        className="card mb-4 w-100"
+        style={{ backgroundColor: '#2A3447', marginTop: '40px' }} 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="card-body">
+          <h2 className="card-title h4 mb-4 text-white">Top 10 Selling Products</h2>
+
+          {loading && (
+            <div className="text-center text-white">
+              <p>Loading top selling products...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && topSellingProducts.length === 0 && (
+            <div className="text-center text-white">
+              <p>No top selling products available.</p>
+            </div>
+          )}
+
+          {!loading && !error && topSellingProducts.length > 0 && (
+            <div className="table-responsive">
+              <table className="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th scope="col" className="text-white">Product Name</th>
+                    <th scope="col" className="text-white">Current Price</th>
+                    <th scope="col" className="text-white">Quantity Sold</th>
+                    <th scope="col" className="text-white">Stock Quantity</th>
+                    <th scope="col" className="text-white">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topSellingProducts.map((product) => (
+                    <motion.tr
+                      key={product.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <td className="align-middle">
+                        <div className="d-flex align-items-center">
+                          <img
+                            src={product.imageUrl || 'https://placehold.co/40x40?text=Product'}
+                            alt={product.productName}
+                            className="rounded-circle me-2"
+                            style={{ width: '40px', height: '40px' }}
+                            onError={(e) => {
+                              if (e.target.src !== fallbackImage) {
+                                e.target.src = fallbackImage;
+                              }
+                            }}
+                          />
+                          <span className="text-white">{product.productName}</span>
+                        </div>
+                      </td>
+                      <td className="align-middle text-white">
+                        ${product.currentProductPrice.toFixed(2)}
+                      </td>
+                      <td className="align-middle text-white">{product.quantitySold}</td>
+                      <td className="align-middle text-white">{product.stockQuantity}</td>
+                      <td className="align-middle">
+                        <button
+                          className="btn btn-link text-danger p-0 me-2"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        <button
+                          className="btn btn-link text-primary p-0"
+                          onClick={() => handleEditProduct(product.id)}
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Product</Modal.Title>
+          <Modal.Title>{isEditMode ? 'Edit Product' : 'Add Product'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
@@ -449,10 +548,7 @@ const ProductsTable = () => {
               />
             </Form.Group>
 
-            <Form.Group
-              className="mb-3"
-              controlId="formPercentagePromoteOfCustomer"
-            >
+            <Form.Group className="mb-3" controlId="formPercentagePromoteOfCustomer">
               <Form.Label>Promotion Percentage (%)</Form.Label>
               <Form.Control
                 type="number"
@@ -502,9 +598,7 @@ const ProductsTable = () => {
                     <option value="">Select a category</option>
                     {category.length > 0 ? (
                       [...category]
-                        .sort((a, b) =>
-                          a.categoryName.localeCompare(b.categoryName),
-                        )
+                        .sort((a, b) => a.categoryName.localeCompare(b.categoryName))
                         .map((cat) => (
                           <option key={cat.categoryId} value={cat.categoryId}>
                             {cat.categoryName}
@@ -521,7 +615,7 @@ const ProductsTable = () => {
             </Form.Group>
 
             <Button variant="primary" type="submit">
-              Add Product
+              {isEditMode ? 'Update Product' : 'Add Product'}
             </Button>
           </Form>
         </Modal.Body>

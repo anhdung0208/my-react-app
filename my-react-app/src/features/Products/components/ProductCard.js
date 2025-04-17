@@ -3,19 +3,23 @@ import PropTypes from "prop-types";
 import "../styles/ProductCard.css";
 import { useNavigate } from "react-router-dom";
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const price = product.currentProductPrice ?? product.retailPrice ?? null;
   const numberOfSoldProduct = product.quantitySold;
   const rating = product.starRating || 0;
 
-  const handleCardClick = () => {
-    navigate(`/product/${product.id}`);
+  const formatPrice = (price) => {
+    if (price === null) return "Price not available";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      minimumFractionDigits: 0,
+    }).format(price);
   };
 
-  const handleAddToCartClick = (e) => {
-    e.stopPropagation();
-    onAddToCart(product);
+  const handleCardClick = () => {
+    navigate(`/product/${product.id}`);
   };
 
   const displayDiscount = Math.floor(product.percentagePromoteOfCustomer);
@@ -49,16 +53,12 @@ const ProductCard = ({ product, onAddToCart }) => {
         </p>
         <div className="product-footer">
           <div className="footer-top-row">
-            <span className="product-price">
-              {price !== null ? `$${price.toFixed(2)}` : "Price not available"}
+            <span className="product-price">{formatPrice(price)}</span>
+            <span className="product-retail-price">
+              {product.retailPrice != null
+                ? formatPrice(product.retailPrice)
+                : "No retail price"}
             </span>
-            <button
-              className="add-to-cart"
-              onClick={handleAddToCartClick}
-              disabled={price === null}
-            >
-              Add to Cart
-            </button>
           </div>
           <div className="footer-bottom-row">
             <span className="product-number-of-sold">
