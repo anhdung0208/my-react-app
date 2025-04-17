@@ -24,9 +24,6 @@ const ProductList = () => {
     loadProducts();
   }, []);
 
-  const handleAddToCart = (product) => {
-    console.log("Added to cart:", product);
-  };
 
   if (loading)
     return (
@@ -46,7 +43,7 @@ const ProductList = () => {
       <div className="product-container">
         {products.map((product) => (
           <div key={product.id}>
-            <ProductCard product={product} onAddToCart={handleAddToCart} />
+            <ProductCard product={product} />
           </div>
         ))}
       </div>

@@ -23,8 +23,8 @@ const ProductsTable = () => {
   const pageSize = 10;
 
   const [showModal, setShowModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // New state for edit mode
-  const [editProductId, setEditProductId] = useState(null); // New state for product ID being edited
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
   const [formData, setFormData] = useState({
     productName: '',
     currentProductPrice: '',
@@ -62,6 +62,7 @@ const ProductsTable = () => {
           productStatus: product.productStatus || 'Unknown',
           importTime: product.importTime || new Date().toISOString(),
           imageUrl: product.imageUrl || null,
+          quantitySold: product.quantitySold || 0, // Thêm quantitySold
         }));
 
         setProductsList(normalizedProducts);
@@ -131,8 +132,8 @@ const ProductsTable = () => {
       importTime: '',
       categoryId: '',
     });
-    setIsEditMode(false); // Set to add mode
-    setEditProductId(null); // Clear edit ID
+    setIsEditMode(false);
+    setEditProductId(null);
     setShowModal(true);
   };
 
@@ -148,11 +149,11 @@ const ProductsTable = () => {
         manufacturingCountry: productToEdit.manufacturingCountry,
         percentagePromoteOfCustomer: productToEdit.percentagePromoteOfCustomer.toString(),
         productStatus: productToEdit.productStatus,
-        importTime: new Date(productToEdit.importTime).toISOString().slice(0, 16), // For datetime-local input
+        importTime: new Date(productToEdit.importTime).toISOString().slice(0, 16),
         categoryId: productToEdit.categoryId || '',
       });
-      setIsEditMode(true); // Set to edit mode
-      setEditProductId(productId); // Set the product ID being edited
+      setIsEditMode(true);
+      setEditProductId(productId);
       setShowModal(true);
     }
   };
@@ -203,7 +204,6 @@ const ProductsTable = () => {
 
     try {
       if (isEditMode) {
-        // Edit product
         await editProduct(editProductId, productData);
         const updatedProducts = products.map((p) =>
           p.id === editProductId ? { ...p, ...productData, id: editProductId } : p
@@ -211,9 +211,8 @@ const ProductsTable = () => {
         setProductsList(updatedProducts);
         setFilteredProducts(updatedProducts);
       } else {
-        // Add product
         const response = await addProduct(productData);
-        const newProduct = { ...response.data, id: response.data.id }; // Ensure ID is included
+        const newProduct = { ...response.data, id: response.data.id };
         setProductsList((prev) => [...prev, newProduct]);
         setFilteredProducts((prev) => [...prev, newProduct]);
       }
@@ -224,6 +223,10 @@ const ProductsTable = () => {
   };
 
   const fallbackImage = 'https://placehold.co/40x40?text=Image+Not+Found';
+
+  const topSellingProducts = products
+    .sort((a, b) => b.quantitySold - a.quantitySold)
+    .slice(0, 10);
 
   return (
     <>
@@ -374,6 +377,98 @@ const ProductsTable = () => {
                 </button>
               </div>
             </>
+          )}
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="card mb-4 w-100"
+        style={{ backgroundColor: '#2A3447', marginTop: '40px' }} 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="card-body">
+          <h2 className="card-title h4 mb-4 text-white">Top 10 Selling Products</h2>
+
+          {loading && (
+            <div className="text-center text-white">
+              <p>Loading top selling products...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && topSellingProducts.length === 0 && (
+            <div className="text-center text-white">
+              <p>No top selling products available.</p>
+            </div>
+          )}
+
+          {!loading && !error && topSellingProducts.length > 0 && (
+            <div className="table-responsive">
+              <table className="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th scope="col" className="text-white">Product Name</th>
+                    <th scope="col" className="text-white">Current Price</th>
+                    <th scope="col" className="text-white">Quantity Sold</th>
+                    <th scope="col" className="text-white">Stock Quantity</th>
+                    <th scope="col" className="text-white">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topSellingProducts.map((product) => (
+                    <motion.tr
+                      key={product.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <td className="align-middle">
+                        <div className="d-flex align-items-center">
+                          <img
+                            src={product.imageUrl || 'https://placehold.co/40x40?text=Product'}
+                            alt={product.productName}
+                            className="rounded-circle me-2"
+                            style={{ width: '40px', height: '40px' }}
+                            onError={(e) => {
+                              if (e.target.src !== fallbackImage) {
+                                e.target.src = fallbackImage;
+                              }
+                            }}
+                          />
+                          <span className="text-white">{product.productName}</span>
+                        </div>
+                      </td>
+                      <td className="align-middle text-white">
+                        ${product.currentProductPrice.toFixed(2)}
+                      </td>
+                      <td className="align-middle text-white">{product.quantitySold}</td>
+                      <td className="align-middle text-white">{product.stockQuantity}</td>
+                      <td className="align-middle">
+                        <button
+                          className="btn btn-link text-danger p-0 me-2"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        <button
+                          className="btn btn-link text-primary p-0"
+                          onClick={() => handleEditProduct(product.id)}
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </motion.div>

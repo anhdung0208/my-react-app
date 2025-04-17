@@ -224,4 +224,45 @@ export const editProduct = async (productId,request) =>{
  
 }  
 
+export const fetchProductMetrics = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found. Please log in.");
+    }
 
+    const response = await nativeApi.get("/api/v1/admin/product-dashboard", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("Response from server:", response.data); // Log the response data
+
+    if (response.status === 200) {
+
+      if (!response.data) {
+        throw new Error("No data returned from the server for product dashboard metrics");
+      }
+      return JSON.parse(JSON.stringify(response.data));
+    } else {
+      throw new Error(
+        `Failed to fetch product dashboard metrics: Unexpected status code ${response.status}`
+      );
+    }
+  } catch (error) {
+    if (error.response) {
+      const { status, data, statusText } = error.response;
+      if (status === 403) {
+        throw new Error("You do not have permission to access product dashboard metrics");
+      } else if (status === 404) {
+        throw new Error("Product dashboard metrics endpoint not found");
+      }
+      throw new Error(
+        `Failed to fetch product dashboard metrics: ${status} - ${data?.message || statusText}`
+      );
+    }
+    throw new Error(
+      "An unexpected error occurred while fetching product dashboard metrics. Please check your network connection."
+    );
+  }
+};
